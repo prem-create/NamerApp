@@ -181,6 +181,7 @@ class FavoritesPage extends StatelessWidget{
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     List allFavorites = appState.favorites;
+    int noOfElementsInFavorites= allFavorites.length;
 
     if(allFavorites.isEmpty){
       return Center(
@@ -194,8 +195,8 @@ class FavoritesPage extends StatelessWidget{
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'All your FAVORITE wordpairs at one place 👇 ',
+        title:  Text(
+          'All your $noOfElementsInFavorites FAVORITE wordpairs at one place 👇 ',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize:25,
@@ -203,7 +204,7 @@ class FavoritesPage extends StatelessWidget{
         ),
       ),
         body: ListView.builder(
-          itemCount: allFavorites.length,
+          itemCount: noOfElementsInFavorites,
           itemBuilder: (context,index){
             return ListTile(
               leading: Text('${index+1}.',
