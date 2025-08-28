@@ -1,6 +1,6 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -84,13 +84,13 @@ switch (selectedIndex) {
 
 
     return LayoutBuilder(
-      builder: (context, Constraints) {
+      builder: (context, contraints) {
         return Scaffold(
           body:Row(
             children: [
               SafeArea(
                 child: NavigationRail(
-                  extended: Constraints.maxWidth >=600,
+                  extended: contraints.maxWidth >=600,
                   destinations: [
                     NavigationRailDestination(
                       icon: Icon(Icons.home),
@@ -183,6 +183,7 @@ class FavoritesPage extends StatelessWidget{
     List allFavorites = appState.favorites;
     int noOfElementsInFavorites= allFavorites.length;
 
+
     if(allFavorites.isEmpty){
       return Center(
         child: const Text('No favorite wordpair yet',
@@ -219,35 +220,42 @@ class FavoritesPage extends StatelessWidget{
                 fontWeight: FontWeight.bold,
                 ) ,
               ),
-              trailing: ElevatedButton(
-                onPressed: (){
-                  final controller =ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Removing...'),
-                      duration:  Duration(seconds: 3),
-                      action: SnackBarAction(
-                        label: 'UnDo',
-                        onPressed: (){
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('UnDo Completed!'),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  );
-                  controller.closed.then(
-                    (reason){
-                    if(reason != SnackBarClosedReason.action )
-                    {
-                    appState.removeFavorite(index);
-                    }
-                  }
-                );  
-              }, 
-              child: const Text('remove'),
-            ) ,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CopyToClipBoard(text:"${allFavorites[index].asLowerCase}"),
+                  SizedBox(width:5),
+                  ElevatedButton(
+                    onPressed: (){
+                      final controller =ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Removing...'),
+                          duration:  Duration(seconds: 3),
+                          action: SnackBarAction(
+                            label: 'UnDo',
+                            onPressed: (){
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('UnDo Completed!'),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      );
+                      controller.closed.then(
+                        (reason){
+                        if(reason != SnackBarClosedReason.action )
+                        {
+                        appState.removeFavorite(index);
+                        }
+                      }
+                    );  
+                  }, 
+                  child: const Text('remove'),
+                              ),
+                ],
+              ) ,
           );
         }
       )
@@ -322,3 +330,22 @@ class BigCard extends StatelessWidget {
   }
 }
 
+class CopyToClipBoard extends StatelessWidget {
+
+final String text;
+
+CopyToClipBoard({super.key ,required this.text});
+@override
+Widget build(BuildContext context){
+  return IconButton(
+    onPressed: (){
+      Clipboard.setData(ClipboardData(text: text));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('copied to clipboard')
+          )
+      );
+    }
+  , icon: const Icon(Icons.copy)) ;
+}
+}
