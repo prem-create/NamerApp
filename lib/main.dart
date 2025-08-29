@@ -47,14 +47,23 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeFavorite(int index) 
-  {
-    favorites.remove(favorites[index]);
-    notifyListeners();
-  }
+WordPair? lastDeletedFavorites ;
+int? lastDeletedIndex ;
+
+void deleteFavorite(int index){
+lastDeletedFavorites = favorites[index];
+lastDeletedIndex= index;
+favorites.removeAt(index);
+notifyListeners();
 }
 
-
+void unDoDelete(){
+  if(lastDeletedFavorites != null && lastDeletedIndex != null){
+    favorites.insert(lastDeletedIndex! , lastDeletedFavorites! );
+    notifyListeners();
+    }
+  }
+}
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -68,8 +77,6 @@ var selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
 
-// ...
-
 Widget page;
 switch (selectedIndex) {
   case 0:
@@ -79,9 +86,6 @@ switch (selectedIndex) {
   default:
     throw UnimplementedError('no widget for $selectedIndex');
 }
-
-// ...
-
 
     return LayoutBuilder(
       builder: (context, contraints) {
@@ -141,7 +145,7 @@ class GeneratorPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('An  AMAZING {Word Pair} idea!!! ',
+          const Text('An  AMAZING Word Pair idea!!! ',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -182,7 +186,6 @@ class FavoritesPage extends StatelessWidget{
     var appState = context.watch<MyAppState>();
     List allFavorites = appState.favorites;
     int noOfElementsInFavorites= allFavorites.length;
-
 
     if(allFavorites.isEmpty){
       return Center(
@@ -227,33 +230,26 @@ class FavoritesPage extends StatelessWidget{
                   SizedBox(width:5),
                   ElevatedButton(
                     onPressed: (){
-                      final controller =ScaffoldMessenger.of(context).showSnackBar(
+                      appState.deleteFavorite(index);
+                      ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Removing...'),
-                          duration:  Duration(seconds: 3),
+                          content: Text('Deleted'),
+                          duration: Duration(seconds: 3),
                           action: SnackBarAction(
                             label: 'UnDo',
                             onPressed: (){
+                              appState.unDoDelete();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('UnDo Completed!'),
-                                ),
+                              SnackBar(content:Text('recovered'),
+                              )
                               );
-                            },
+                            }
                           ),
                         )
                       );
-                      controller.closed.then(
-                        (reason){
-                        if(reason != SnackBarClosedReason.action )
-                        {
-                        appState.removeFavorite(index);
-                        }
-                      }
-                    );  
-                  }, 
-                  child: const Text('remove'),
-                              ),
+                    }, 
+                    child: Text('Delete')
+                  )
                 ],
               ) ,
           );
