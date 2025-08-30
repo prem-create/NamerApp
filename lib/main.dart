@@ -49,21 +49,45 @@ class MyAppState extends ChangeNotifier {
 
 WordPair? lastDeletedFavorites ;
 int? lastDeletedIndex ;
+List<WordPair> lastDeletedMultipleFavorites=[];
+List<int> lastDeletedMultipleIndexes=[];
 
-void deleteFavorite(int index){
+void deleteFavorite(index){
 lastDeletedFavorites = favorites[index];
 lastDeletedIndex= index;
 favorites.removeAt(index);
 notifyListeners();
 }
 
+void deleteMultipleFavorite(indexes , selectedWordPairs){
+  lastDeletedMultipleFavorites= selectedWordPairs;
+  lastDeletedMultipleIndexes = indexes;
+  for(int i= lastDeletedMultipleIndexes.length-1;i>=0;i--){
+  favorites.removeAt(indexes[i]);
+  }
+  notifyListeners();
+  }
+
 void unDoDelete(){
   if(lastDeletedFavorites != null && lastDeletedIndex != null){
     favorites.insert(lastDeletedIndex! , lastDeletedFavorites! );
     notifyListeners();
     }
+  }  
+
+void undoMultipleDelete() {
+  for (int i = lastDeletedMultipleIndexes.length - 1; i >= 0; i--) {
+    int insertIndex = lastDeletedMultipleIndexes[i];
+    if (insertIndex > favorites.length) {
+      insertIndex = favorites.length;
+    }
+    favorites.insert(insertIndex, lastDeletedMultipleFavorites[i]);
+  }
+  notifyListeners();
   }
 }
+
+
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -180,13 +204,39 @@ class GeneratorPage extends StatelessWidget {
 
 //favoritesPage
 
-class FavoritesPage extends StatelessWidget{
+class FavoritesPage extends StatefulWidget{
+
+  @override
+  State<FavoritesPage> createState() => _FavoritesPageState();
+}
+
+class _FavoritesPageState extends State<FavoritesPage> {
+    bool isSelectioinModeOn= false;
+    Set<int> selectedIndexes = {};
+    List<WordPair> selectedWordPair =[];
+
+    void toggleSelection(int index){
+      
+      setState((){
+        if(selectedIndexes.contains(index)){
+          selectedIndexes.remove(index);
+          if(selectedIndexes.isEmpty){
+            isSelectioinModeOn =false;
+          }
+        }
+        else{
+          selectedIndexes.add(index);
+        }
+        print (selectedIndexes);
+      }
+      );
+    }
+
 @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     List allFavorites = appState.favorites;
     int noOfElementsInFavorites= allFavorites.length;
-
     if(allFavorites.isEmpty){
       return Center(
         child: const Text('No favorite wordpair yet',
@@ -199,7 +249,42 @@ class FavoritesPage extends StatelessWidget{
     }
     return Scaffold(
       appBar: AppBar(
-        title:  Text(
+        title:  isSelectioinModeOn?
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed:(){
+                selectedWordPair.clear();
+                for(int i=selectedIndexes.length-1;i>=0;i--){
+                  selectedWordPair.add(appState.favorites[selectedIndexes.elementAt(i)]);
+                }
+                appState.deleteMultipleFavorite(selectedIndexes.toList(), selectedWordPair);
+                selectedIndexes.clear();
+                isSelectioinModeOn= false;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Deleted all selected items'),
+                    action: SnackBarAction(
+                      label: 'UnDo', 
+                      onPressed: (){
+                        appState.undoMultipleDelete();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('restored')
+                          )
+                        );
+                      }
+                    ),
+                  )
+                );
+              } , 
+              child:Text('Delete selected')
+              ),
+          ],
+        )
+        :
+        Text(
           'All your $noOfElementsInFavorites FAVORITE wordpairs at one place 👇 ',
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -211,12 +296,30 @@ class FavoritesPage extends StatelessWidget{
           itemCount: noOfElementsInFavorites,
           itemBuilder: (context,index){
             return ListTile(
-              leading: Text('${index+1}.',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+              onLongPress: (){
+                isSelectioinModeOn= true;
+                toggleSelection(index);
+              },
+              onTap: (){
+                if(isSelectioinModeOn== true){
+                  toggleSelection(index);
+                }
+              },
+              
+              leading: isSelectioinModeOn? 
+              (
+                selectedIndexes.contains(index)?
+              Icon(Icons.circle_rounded):
+              Icon(Icons.circle_outlined)
+              )
+              :
+              Text('${index+1}.',
+                style: TextStyle( 
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+              
               title: Text(allFavorites[index].asLowerCase,
               style: TextStyle(
                 fontSize: 20,
@@ -226,9 +329,9 @@ class FavoritesPage extends StatelessWidget{
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CopyToClipBoard(text:"${allFavorites[index].asLowerCase}"),
+                  isSelectioinModeOn? SizedBox.shrink(): CopyToClipBoard(text:"${allFavorites[index].asLowerCase}"),
                   SizedBox(width:5),
-                  ElevatedButton(
+                  isSelectioinModeOn? SizedBox.shrink():ElevatedButton(
                     onPressed: (){
                       appState.deleteFavorite(index);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -307,9 +410,7 @@ class BigCard extends StatelessWidget {
       fontWeight: FontWeight.bold,
     );
 
-
     return Card(
-      
         color: theme.colorScheme.primary,
       
         child: Padding(
@@ -319,7 +420,7 @@ class BigCard extends StatelessWidget {
           semanticsLabel: "${pair.first} ${pair.second}",    
           /*i found out syntax is okay and it might work
           but it is not working in my default narrator , this portion in
-          perticular needs thorough checking and will do that later */
+          perticular needs thorough checking  */
         ),
       ),
     );
