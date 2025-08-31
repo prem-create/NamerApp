@@ -2,6 +2,8 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -352,7 +354,18 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       );
                     }, 
                     child: Text('Delete')
-                  )
+                  ),
+                  isSelectioinModeOn? SizedBox.shrink():ElevatedButton(
+                    onPressed: (){
+                    SharePlus.instance.share(
+                    ShareParams(
+                        text: "Hey! have a look I found an interesting word pair in Namer app: ${allFavorites[index].asLowerCase}",
+                        subject: "Namer App favorites",
+                        ),
+                    );  
+                    },
+                    child: Text('Share'),
+                  ),
                 ],
               ) ,
           );
