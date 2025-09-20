@@ -16,12 +16,21 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: MaterialApp(
-        title: 'Namer App',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor:  Colors.deepOrange),
-        ),
-        home: MyHomePage(),
+      child: Consumer<MyAppState>( // 👈 listen to theme changes
+        builder: (context, appState, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Namer App',
+            themeMode: appState.themeMode, // 👈 dynamic theme mode
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+            ),
+            darkTheme: ThemeData.dark().copyWith(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange, brightness: Brightness.dark),
+            ),
+            home: MyHomePage(),
+          );
+        },
       ),
     );
   }
@@ -29,6 +38,21 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
+
+  // -------------------
+  // THEME HANDLING
+  // -------------------
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
+
+  void toggleTheme() {
+    if (_themeMode == ThemeMode.light) {
+      _themeMode = ThemeMode.dark;
+    } else {
+      _themeMode = ThemeMode.light;
+    }
+    notifyListeners();
+  }
 
   void getNext(){    
     //function that get triggered when next button is pressed
@@ -116,38 +140,51 @@ switch (selectedIndex) {
     return LayoutBuilder(
       builder: (context, contraints) {
         return Scaffold(
-          body:Row(
-            children: [
-              SafeArea(
-                child: NavigationRail(
-                  extended: contraints.maxWidth >=600,
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.home),
-                      label: Text('Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.favorite),
-                      label: Text('Favorites'),
-                    ),
-                  ],
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (value) {
-                    setState(() {
-                      selectedIndex= value;
-                    });
-                  },
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: page,
-                ),
-              ),
-            ],
+          appBar: AppBar(
+            title: Text('Namer App'),
+            actions: [
+                IconButton( // 👈 theme toggle button
+                icon: Icon(Icons.brightness_6),
+                onPressed: () {
+                  context.read<MyAppState>().toggleTheme();
+                },
+                          ),
+      ]
           ),
-        );
+  body: Row(
+    children: [
+      
+      SafeArea(
+        child: NavigationRail(
+          extended: contraints.maxWidth >= 600,
+          destinations: const [
+            NavigationRailDestination(
+              icon: Icon(Icons.home),
+              label: Text('Home'),
+            ),
+            NavigationRailDestination(
+              icon: Icon(Icons.favorite),
+              label: Text('Favorites'),
+            ),
+          ],
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (value) {
+            setState(() {
+              selectedIndex = value;
+            });
+          },
+        ),
+      ),
+      Expanded(
+        child: Container(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          child: page,
+        ),
+      ),
+    ],
+  ),
+);
+
       }
     );
   }
