@@ -97,6 +97,6 @@ lib/
 ## 🔗 Media
 
 For **screenshots and demo video**, please check my LinkedIn post:
-👉 [My LinkedIn Post](your-linkedin-post-url-here)
+👉 [My LinkedIn Post]( https://www.linkedin.com/posts/prem-dilliwar-40425a376_flutter-dart-mobileapp-activity-7376217457361055744-x73j?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFzxEsQB3u70Z-BsifOb_mxW0jmn_SuI8cE )
 
 ---
